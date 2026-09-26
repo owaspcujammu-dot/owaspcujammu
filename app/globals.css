@@ -1,0 +1,258 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------------------------------------------------------ */
+/* Design tokens                                                       */
+/* ------------------------------------------------------------------ */
+@layer base {
+  /*
+   * Accent = navy #0a1c40. THIS is the place to change the theme colour.
+   * (The wordmark PNGs in /public/brand carry their own colours.)
+   *
+   * Roles:  400 gradient highlight   500 text, icons, borders, tints
+   *         600 solid fills (buttons, pills; white text)
+   *         700 hover on those fills  800 background bloom
+   *
+   * Light mode uses #0a1c40 exactly for text and fills (16.76:1 on white).
+   *
+   * Dark mode keeps #0a1c40 exactly for fills and the bloom, but #0a1c40 is
+   * only 1.18:1 on the #0a0a0a page, so text would vanish. Text and icons use a
+   * lighter tint of the same hue (220deg) instead:
+   *   dark 500 #4775d1 -> 4.46:1 on #0a0a0a
+   * Navy fills get a faint inset ring (.btn-primary, event filter pill) so
+   * their shape still reads against black. Hover lifts lighter in dark mode and
+   * darker in light mode, so it is visible in both.
+   */
+  :root {
+    /* Set here rather than by JS: the provider only toggles the .dark class. */
+    color-scheme: light;
+    --bg: 255 255 255;
+    --bg-elevated: 250 250 251;
+    --fg: 17 17 19;
+    --fg-muted: 90 94 101;
+    --border: 226 228 232;
+    --accent-400: 21 58 132; /* #153a84 */
+    --accent-500: 10 28 64; /* #0a1c40 */
+    --accent-600: 10 28 64; /* #0a1c40 */
+    --accent-700: 6 18 40; /* #061228 */
+    --accent-800: 10 28 64; /* #0a1c40 */
+    --accent: var(--accent-500);
+    --nav-bg: 255 255 255 / 0.78;
+  }
+
+  .dark {
+    color-scheme: dark;
+    --bg: 10 10 10;
+    --bg-elevated: 20 21 24;
+    --fg: 244 244 245;
+    --fg-muted: 161 165 172;
+    --border: 39 41 46;
+    --accent-400: 100 139 216; /* #648bd8 */
+    --accent-500: 71 117 209; /* #4775d1 */
+    --accent-600: 10 28 64; /* #0a1c40 */
+    --accent-700: 18 48 107; /* #12306b */
+    --accent-800: 10 28 64; /* #0a1c40 */
+    --nav-bg: 10 10 10 / 0.72;
+  }
+
+  * {
+    border-color: rgb(var(--border));
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: rgb(var(--bg));
+    color: rgb(var(--fg));
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Sticky header offset for anchor navigation */
+  section[id],
+  div[id].scroll-anchor {
+    scroll-margin-top: 5.5rem;
+  }
+
+  ::selection {
+    /* 500, not the navy fill: a #0a1c40 highlight would be invisible on the
+       black page. White text on it is 4.44:1 dark, 16.76:1 light. */
+    background-color: rgb(var(--accent-500) / 0.9);
+    color: #fff;
+  }
+
+  /* Visible, consistent keyboard focus */
+  :focus-visible {
+    outline: 2px solid rgb(var(--accent));
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 11px;
+    height: 11px;
+  }
+  ::-webkit-scrollbar-track {
+    background: rgb(var(--bg));
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgb(var(--border));
+    border-radius: 999px;
+    border: 3px solid rgb(var(--bg));
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgb(var(--accent) / 0.6);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Reusable component classes                                          */
+/* ------------------------------------------------------------------ */
+@layer components {
+  .surface {
+    background-color: rgb(var(--bg-elevated));
+    border: 1px solid rgb(var(--border));
+  }
+
+  .muted {
+    color: rgb(var(--fg-muted));
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold
+           transition-all duration-200 focus-visible:outline-none;
+  }
+
+  .btn-primary {
+    @apply btn bg-accent-600 text-white ring-1 ring-inset ring-white/15 hover:bg-accent-700 hover:shadow-glow active:scale-[0.98];
+  }
+
+  .btn-ghost {
+    @apply btn border border-[rgb(var(--border))] text-[rgb(var(--fg))]
+           hover:border-accent-500/60 hover:text-accent-500 active:scale-[0.98];
+  }
+
+  .eyebrow {
+    @apply inline-flex items-center gap-2 rounded-full border border-accent-500/30
+           bg-accent-500/10 px-3.5 py-1.5 font-mono text-[11px] font-semibold uppercase
+           tracking-[0.18em] text-accent-500;
+  }
+
+  .section-title {
+    @apply font-display text-3xl font-bold leading-[1.15] tracking-tight sm:text-4xl lg:text-[2.75rem];
+  }
+
+  .card {
+    @apply surface rounded-2xl shadow-card transition-all duration-300;
+  }
+
+  .card-hover {
+    @apply hover:-translate-y-1 hover:border-accent-500/45 hover:shadow-glow;
+  }
+
+  /* Thin gradient rule used between sections */
+  .rule {
+    @apply h-px w-full bg-gradient-to-r from-transparent via-[rgb(var(--border))] to-transparent;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    /* Ends on 500 rather than a deeper step, so the tail stays readable on dark */
+    @apply bg-gradient-to-br from-accent-400 to-accent-500 bg-clip-text text-transparent;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Respect reduced-motion preferences                                  */
+/* ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Circular cursor                                                     */
+/* ------------------------------------------------------------------ */
+/*
+ * `.has-custom-cursor` is added by components/CustomCursor.jsx, and only when a
+ * fine pointer is present - so touch devices, and anyone whose JavaScript fails,
+ * keep the native cursor rather than losing it entirely.
+ *
+ * !important because utilities like `cursor-pointer` would otherwise win, and
+ * the native cursor would show through alongside the custom one.
+ */
+.has-custom-cursor,
+.has-custom-cursor *:not(input):not(textarea):not([contenteditable='true']) {
+  cursor: none !important;
+}
+
+.cursor-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.cursor-dot,
+.cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  border-radius: 9999px;
+  opacity: 0;
+  will-change: transform;
+  transition:
+    opacity 0.2s ease,
+    width 0.22s ease,
+    height 0.22s ease,
+    background-color 0.22s ease,
+    border-color 0.22s ease;
+}
+
+[data-cursor-visible='true'] .cursor-dot,
+[data-cursor-visible='true'] .cursor-ring {
+  opacity: 1;
+}
+
+.cursor-dot {
+  width: 6px;
+  height: 6px;
+  background-color: rgb(var(--accent-500));
+}
+
+.cursor-ring {
+  width: 32px;
+  height: 32px;
+  border: 1.5px solid rgb(var(--accent-500) / 0.75);
+}
+
+/* Over links, buttons and fields the ring opens up and the dot steps aside */
+[data-cursor-hover='true'] .cursor-ring {
+  width: 52px;
+  height: 52px;
+  border-color: rgb(var(--accent-500));
+  background-color: rgb(var(--accent-500) / 0.1);
+}
+
+[data-cursor-hover='true'] .cursor-dot {
+  opacity: 0;
+}
+
+[data-cursor-down='true'] .cursor-ring {
+  width: 24px;
+  height: 24px;
+}
