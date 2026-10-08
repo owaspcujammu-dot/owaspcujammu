@@ -76,6 +76,41 @@ export default function Navbar() {
 
   const closeMenu = useCallback(() => setMenuOpen(false), []);
 
+  /*
+   * Scroll to a section ourselves rather than letting the browser follow the
+   * anchor.
+   *
+   * Two reasons, both of which showed up on phones:
+   *  - While the mobile menu is open the body carries `overflow: hidden`, and
+   *    because <html> is `overflow: visible` that value propagates to the
+   *    viewport. A native anchor jump fires before React can release the lock,
+   *    so the URL gained the hash and the page never moved.
+   *  - Repeating the hash you are already on is a no-op for the browser, so
+   *    tapping the active section's icon did nothing at all.
+   *
+   * Scrolling explicitly on the next frame sidesteps both. `scroll-margin-top`
+   * on the sections still supplies the sticky-header offset.
+   */
+  const goToSection = useCallback((event, href) => {
+    if (!href.startsWith('#')) return;
+    // Let the browser handle modified clicks (new tab, etc.).
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+    const target = document.getElementById(href.slice(1));
+    if (!target) return; // no such section - fall back to default behaviour
+
+    event.preventDefault();
+    setMenuOpen(false);
+    // Release the scroll lock now; the effect cleanup runs too late to help.
+    document.body.style.overflow = '';
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    requestAnimationFrame(() => {
+      target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+      window.history.replaceState(null, '', href);
+    });
+  }, []);
+
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-[background-color,box-shadow,border-color] duration-300 ${
@@ -94,7 +129,7 @@ export default function Navbar() {
       <nav className="container flex h-[72px] items-center justify-between" aria-label="Primary">
         <a
           href="#home"
-          onClick={closeMenu}
+          onClick={(event) => goToSection(event, '#home')}
           className="rounded-lg transition-opacity hover:opacity-85"
           aria-label={`${siteConfig.name} - back to top`}
         >
@@ -107,7 +142,11 @@ export default function Navbar() {
 
         {/* Desktop links - icon only. The label lives on aria-label for
             assistive tech and in a tooltip that appears on hover AND keyboard
-            focus, so the meaning is never mouse-only. */}
+            focus, so the meaning is never mouse-only.
+
+            `touch-manipulation` removes the tap delay, and the tooltip is
+            hover-gated by Tailwind's hoverOnlyWhenSupported flag so a touch
+            device never spends the first tap revealing it. */}
         <ul className="hidden items-center gap-1.5 lg:flex">
           {navLinks.map((link) => {
             const id = link.href.replace('#', '');
@@ -117,9 +156,10 @@ export default function Navbar() {
               <li key={link.href}>
                 <a
                   href={link.href}
+                  onClick={(event) => goToSection(event, link.href)}
                   aria-label={link.label}
                   aria-current={isActive ? 'true' : undefined}
-                  className={`group relative grid h-10 w-10 place-items-center rounded-full transition-colors duration-200 ${
+                  className={`group relative grid h-10 w-10 touch-manipulation place-items-center rounded-full transition-colors duration-200 ${
                     isActive
                       ? 'text-accent-500'
                       : 'text-[rgb(var(--fg-muted))] hover:text-[rgb(var(--fg))]'
@@ -170,7 +210,7 @@ export default function Navbar() {
             aria-expanded={menuOpen}
             aria-controls="mobile-menu"
             aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
-            className="grid h-10 w-10 place-items-center rounded-full border border-[rgb(var(--border))]
+            className="grid h-10 w-10 touch-manipulation place-items-center rounded-full border border-[rgb(var(--border))]
                        text-[rgb(var(--fg))] transition-colors hover:border-accent-500/50 hover:text-accent-500 lg:hidden"
           >
             {menuOpen ? (
@@ -203,9 +243,9 @@ export default function Navbar() {
                   <li key={link.href}>
                     <a
                       href={link.href}
-                      onClick={closeMenu}
+                      onClick={(event) => goToSection(event, link.href)}
                       aria-current={isActive ? 'true' : undefined}
-                      className={`flex items-center justify-between rounded-xl px-4 py-3 text-[15px] font-medium transition-colors ${
+                      className={`flex touch-manipulation items-center justify-between rounded-xl px-4 py-3 text-[15px] font-medium transition-colors ${
                         isActive
                           ? 'bg-accent-500/10 text-accent-500'
                           : 'text-[rgb(var(--fg-muted))] hover:bg-[rgb(var(--bg-elevated))] hover:text-[rgb(var(--fg))]'
