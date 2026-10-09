@@ -22,6 +22,12 @@ const SECTION_IDS = navLinks.map((link) => link.href.replace('#', ''));
 
 const NAV_ICONS = { Home, Info, Target, CalendarDays, Users, Handshake, UserPlus, Mail };
 
+/** Matches `scroll-margin-top: 5.5rem` on the sections in globals.css. */
+const HEADER_OFFSET = 88;
+
+/** Matches the mobile menu's AnimatePresence exit duration (0.28s). */
+const MENU_EXIT_MS = 320;
+
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -57,39 +63,39 @@ export default function Navbar() {
     return () => observer.disconnect();
   }, []);
 
-  /* Close the mobile menu on Escape, and lock background scroll while open. */
+  /*
+   * Close the mobile menu on Escape.
+   *
+   * Deliberately no `body { overflow: hidden }` scroll lock here. The menu is a
+   * dropdown inside the fixed header rather than a full-screen overlay, so it
+   * never needed one - and the lock actively broke navigation on phones:
+   * <html> is `overflow: visible`, so the body value propagated to the viewport
+   * and swallowed the jump, and iOS additionally resets scroll position when
+   * body overflow is toggled, undoing any scroll performed around it.
+   */
   useEffect(() => {
     if (!menuOpen) return undefined;
 
     const onKeyDown = (event) => {
       if (event.key === 'Escape') setMenuOpen(false);
     };
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', onKeyDown);
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener('keydown', onKeyDown);
-    };
+    return () => window.removeEventListener('keydown', onKeyDown);
   }, [menuOpen]);
 
   const closeMenu = useCallback(() => setMenuOpen(false), []);
 
   /*
    * Scroll to a section ourselves rather than letting the browser follow the
-   * anchor.
+   * anchor, because the native jump is unreliable here:
+   *  - repeating the hash you are already on is a no-op, so tapping the active
+   *    section did nothing at all;
+   *  - the header is fixed, so a raw jump lands under it.
    *
-   * Two reasons, both of which showed up on phones:
-   *  - While the mobile menu is open the body carries `overflow: hidden`, and
-   *    because <html> is `overflow: visible` that value propagates to the
-   *    viewport. A native anchor jump fires before React can release the lock,
-   *    so the URL gained the hash and the page never moved.
-   *  - Repeating the hash you are already on is a no-op for the browser, so
-   *    tapping the active section's icon did nothing at all.
-   *
-   * Scrolling explicitly on the next frame sidesteps both. `scroll-margin-top`
-   * on the sections still supplies the sticky-header offset.
+   * Animation is deliberately skipped on touch devices. A smooth scroll is an
+   * animation the browser abandons as soon as a finger touches the screen, and
+   * over a page this tall that reads as "the link did nothing" on a phone.
+   * Pointer devices keep the smooth behaviour.
    */
   const goToSection = useCallback((event, href) => {
     if (!href.startsWith('#')) return;
@@ -101,14 +107,22 @@ export default function Navbar() {
 
     event.preventDefault();
     setMenuOpen(false);
-    // Release the scroll lock now; the effect cleanup runs too late to help.
-    document.body.style.overflow = '';
 
+    const touch = window.matchMedia('(hover: none)').matches;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    requestAnimationFrame(() => {
-      target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
-      window.history.replaceState(null, '', href);
-    });
+    const behavior = touch || reduced ? 'auto' : 'smooth';
+
+    // Measured fresh each time: the sticky header is 72px, and HEADER_OFFSET
+    // matches the scroll-margin-top the sections carry in globals.css.
+    const scrollToTarget = () => {
+      const top = target.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET;
+      window.scrollTo({ top: Math.max(0, top), behavior });
+    };
+
+    scrollToTarget();
+    // The menu collapsing can shift layout under us; re-assert once it has gone.
+    if (behavior === 'auto') window.setTimeout(scrollToTarget, MENU_EXIT_MS);
+    window.history.replaceState(null, '', href);
   }, []);
 
   return (
