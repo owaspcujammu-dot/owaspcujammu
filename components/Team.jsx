@@ -16,6 +16,16 @@ const isPlaceholder = (name) => typeof name === 'string' && name.trim().startsWi
 const isOpenPosition = (person) => !person.name;
 const OPEN_LABEL = 'To be selected soon';
 
+/*
+ * The officers who run the chapter, as opposed to the department leads.
+ *
+ * Matched on role rather than id so adding a third Vice President needs no
+ * change here. Nearly every other title ends in "Lead", so these two are the
+ * only thing distinguishing "runs the whole chapter" from "runs one area".
+ */
+const LEADERSHIP_ROLES = new Set(['President', 'Vice President']);
+const isLeadership = (person) => LEADERSHIP_ROLES.has(person.role);
+
 /**
  * `variant="overlay"` sits on top of a photo, so the icons go white and lose
  * their bordered box. Both variants keep a 32px hit area for touch.
@@ -183,6 +193,8 @@ export default function Team() {
    * empty tile.
    */
   const members = coreTeam.filter((member) => !isOpenPosition(member));
+  const leadership = members.filter(isLeadership);
+  const departmentLeads = members.filter((member) => !isLeadership(member));
 
   return (
     <section id="team" aria-labelledby="team-heading" className="relative py-24 sm:py-32">
@@ -209,37 +221,55 @@ export default function Team() {
           </Reveal>
         </div>
 
-        {/* Core team */}
-        <div className="mt-16">
-          <GroupLabel>Core Team</GroupLabel>
+        {/* Chapter leadership - deliberately wider tracks than the department
+            grid below. Almost every other title ends in "Lead", so card size is
+            what tells a skimming visitor who runs the chapter. */}
+        {leadership.length > 0 ? (
+          <div className="mt-16">
+            <GroupLabel>Chapter Leadership</GroupLabel>
+            <ul className="mt-8 grid grid-cols-1 justify-center gap-5 sm:[grid-template-columns:repeat(auto-fit,minmax(260px,300px))]">
+              {leadership.map((member, index) => (
+                <li key={member.id}>
+                  <Reveal delay={(index % 3) * 0.06} className="h-full">
+                    <PersonCard person={member} />
+                  </Reveal>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
 
-          {/* auto-fit collapses the unused tracks and justify-center centres what
-              is left, so any number of members sits balanced instead of leaving
-              a gap on the right. Tracks are capped so cards keep the same size
-              as the faculty card above. */}
-          <ul className="mt-8 grid grid-cols-1 justify-center gap-4 sm:[grid-template-columns:repeat(auto-fit,minmax(230px,260px))]">
-            {members.map((member, index) => (
-              <li key={member.id}>
-                <Reveal delay={(index % 4) * 0.06} className="h-full">
-                  <PersonCard person={member} />
-                </Reveal>
-              </li>
-            ))}
+        {/* Department leads - narrower tracks, read as a second tier. */}
+        {departmentLeads.length > 0 ? (
+          <div className="mt-16">
+            <GroupLabel>Department Leads</GroupLabel>
 
-          </ul>
+            {/* auto-fit collapses the unused tracks and justify-center centres
+                what is left, so any number of members sits balanced instead of
+                leaving a gap on the right. */}
+            <ul className="mt-8 grid grid-cols-1 justify-center gap-4 sm:[grid-template-columns:repeat(auto-fit,minmax(220px,240px))]">
+              {departmentLeads.map((member, index) => (
+                <li key={member.id}>
+                  <Reveal delay={(index % 4) * 0.06} className="h-full">
+                    <PersonCard person={member} />
+                  </Reveal>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
 
-          <Reveal delay={0.1}>
-            <p className="muted mt-10 text-center text-sm">
-              Want a seat at this table?{' '}
-              <a
-                href="#join"
-                className="font-semibold text-accent-500 underline-offset-4 hover:underline"
-              >
-                Applications open every semester.
-              </a>
-            </p>
-          </Reveal>
-        </div>
+        <Reveal delay={0.1}>
+          <p className="muted mt-10 text-center text-sm">
+            Want a seat at this table?{' '}
+            <a
+              href="#join"
+              className="font-semibold text-accent-500 underline-offset-4 hover:underline"
+            >
+              Applications open every semester.
+            </a>
+          </p>
+        </Reveal>
       </div>
     </section>
   );
