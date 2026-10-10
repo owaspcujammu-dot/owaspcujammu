@@ -7,7 +7,6 @@ import Hero from '@/components/Hero';
 import Join from '@/components/Join';
 import Mission from '@/components/Mission';
 import Navbar from '@/components/Navbar';
-import Sponsors from '@/components/Sponsors';
 import Team from '@/components/Team';
 
 export default function HomePage() {
@@ -21,7 +20,6 @@ export default function HomePage() {
         <Mission />
         <Events />
         <Team />
-        <Sponsors />
         <Join />
         <Contact />
       </main>
