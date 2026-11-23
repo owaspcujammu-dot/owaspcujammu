@@ -1,5 +1,5 @@
 import { Inter, Space_Grotesk } from 'next/font/google';
-import { siteConfig } from '@/lib/site';
+import { coreTeam, siteConfig } from '@/lib/site';
 import CustomCursor from '@/components/CustomCursor';
 import ThemeProvider from '@/components/ThemeProvider';
 import './globals.css';
@@ -96,6 +96,18 @@ const structuredData = {
     addressCountry: 'IN',
   },
   sameAs: Object.values(siteConfig.socials),
+  // The chapter's leadership, so search engines know who leads the chapter.
+  member: coreTeam
+    .filter((person) => person.name)
+    .map((person) => ({
+      '@type': 'OrganizationRole',
+      roleName: person.role,
+      member: {
+        '@type': 'Person',
+        name: person.name,
+        ...(person.socials ? { sameAs: Object.values(person.socials).filter(Boolean) } : {}),
+      },
+    })),
 };
 
 export default function RootLayout({ children }) {
