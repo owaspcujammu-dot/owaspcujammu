@@ -3,6 +3,7 @@ import Activities from '@/components/Activities';
 import Contact from '@/components/Contact';
 import Events from '@/components/Events';
 import Footer from '@/components/Footer';
+import Gallery from '@/components/Gallery';
 import Hero from '@/components/Hero';
 import Join from '@/components/Join';
 import Mission from '@/components/Mission';
@@ -19,6 +20,7 @@ export default function HomePage() {
         <Activities />
         <Mission />
         <Events />
+        <Gallery />
         <Team />
         <Join />
         <Contact />

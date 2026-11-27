@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { AnimatePresence, motion, useScroll, useSpring } from 'framer-motion';
 import {
   CalendarDays,
+  Camera,
   Handshake,
   Home,
   Info,
@@ -20,7 +21,7 @@ import ThemeToggle from './ThemeToggle';
 
 const SECTION_IDS = navLinks.map((link) => link.href.replace('#', ''));
 
-const NAV_ICONS = { Home, Info, Target, CalendarDays, Users, Handshake, UserPlus, Mail };
+const NAV_ICONS = { Home, Info, Target, CalendarDays, Camera, Users, Handshake, UserPlus, Mail };
 
 /** Matches `scroll-margin-top: 5.5rem` on the sections in globals.css. */
 const HEADER_OFFSET = 88;
