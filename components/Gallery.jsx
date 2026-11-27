@@ -206,31 +206,31 @@ function Lightbox({ album, index, onClose, onStep, closeRef }) {
           if (event.target === event.currentTarget) onClose();
         }}
       >
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.figure
-            key={photo.src}
-            className="flex max-h-full flex-col items-center"
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.18 }}
-          >
-            <Image
-              src={photo.src}
-              alt={photo.alt}
-              width={photo.width}
-              height={photo.height}
-              sizes="100vw"
-              priority
-              className="h-auto max-h-[76vh] w-auto max-w-full rounded-lg object-contain"
-            />
-            {photo.caption ? (
-              <figcaption className="mt-3 max-w-2xl px-2 text-center text-[13px] leading-relaxed text-white/75">
-                {photo.caption}
-              </figcaption>
-            ) : null}
-          </motion.figure>
-        </AnimatePresence>
+        {/* The new photo replaces the old one at once and only fades in.
+            Waiting for the old one to fade out first slowed every tap, and
+            stalled entirely when the browser throttles animation. */}
+        <motion.figure
+          key={photo.src}
+          className="flex max-h-full flex-col items-center"
+          initial={{ opacity: 0.4, scale: 0.985 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.16 }}
+        >
+          <Image
+            src={photo.src}
+            alt={photo.alt}
+            width={photo.width}
+            height={photo.height}
+            sizes="100vw"
+            priority
+            className="h-auto max-h-[76vh] w-auto max-w-full rounded-lg object-contain"
+          />
+          {photo.caption ? (
+            <figcaption className="mt-3 max-w-2xl px-2 text-center text-[13px] leading-relaxed text-white/75">
+              {photo.caption}
+            </figcaption>
+          ) : null}
+        </motion.figure>
 
         {total > 1 ? (
           <>
