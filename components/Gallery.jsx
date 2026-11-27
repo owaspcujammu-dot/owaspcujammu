@@ -28,6 +28,16 @@ function coverOf(album) {
 /** Horizontal finger travel, in px, that counts as a swipe in the viewer. */
 const SWIPE_PX = 50;
 
+const OPEN_ALBUM_EVENT = 'gallery:open-album';
+
+/**
+ * Open an album from anywhere on the page, e.g. an event card's "View photos"
+ * link. `opener` gets focus back when the album closes.
+ */
+export function openGalleryAlbum(id, opener) {
+  window.dispatchEvent(new CustomEvent(OPEN_ALBUM_EVENT, { detail: { id, opener } }));
+}
+
 /** One card per event: the cover photo, and a tap opens the whole album. */
 function AlbumCard({ album, onOpen }) {
   const cover = coverOf(album);
@@ -214,9 +224,11 @@ function Lightbox({ album, index, onClose, onStep, closeRef }) {
               priority
               className="h-auto max-h-[76vh] w-auto max-w-full rounded-lg object-contain"
             />
-            <figcaption className="mt-3 max-w-2xl px-2 text-center text-[13px] leading-relaxed text-white/75">
-              {photo.alt}
-            </figcaption>
+            {photo.caption ? (
+              <figcaption className="mt-3 max-w-2xl px-2 text-center text-[13px] leading-relaxed text-white/75">
+                {photo.caption}
+              </figcaption>
+            ) : null}
           </motion.figure>
         </AnimatePresence>
 
@@ -275,6 +287,19 @@ export default function Gallery() {
     (delta) => setPhotoIndex((i) => (i === null ? i : (i + delta + total) % total)),
     [total],
   );
+
+  /* Albums can also be opened from elsewhere, e.g. an event card. */
+  useEffect(() => {
+    const onOpen = (event) => {
+      const { id, opener } = event.detail || {};
+      if (!galleries.some((item) => item.id === id)) return;
+      albumOpener.current = opener || null;
+      setPhotoIndex(null);
+      setAlbumId(id);
+    };
+    window.addEventListener(OPEN_ALBUM_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_ALBUM_EVENT, onOpen);
+  }, []);
 
   /* Lock the page behind the album, and put it back exactly where it was. */
   useEffect(() => {

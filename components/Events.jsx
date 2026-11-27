@@ -3,8 +3,9 @@
 import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { CalendarDays, ImageIcon, MapPin } from 'lucide-react';
-import { events } from '@/lib/site';
+import { CalendarDays, Camera, ChevronRight, ImageIcon, MapPin } from 'lucide-react';
+import { events, galleries } from '@/lib/site';
+import { openGalleryAlbum } from './Gallery';
 import Reveal from './Reveal';
 import SectionHeading from './SectionHeading';
 
@@ -158,6 +159,9 @@ export default function Events() {
             {visible.map((event) => {
               const date = formatDate(event.date);
               const isUpcoming = event.status === 'upcoming';
+              const album = event.gallery
+                ? galleries.find((item) => item.id === event.gallery)
+                : null;
 
               return (
                 <li key={event.title} className="relative sm:pl-14">
@@ -215,6 +219,23 @@ export default function Events() {
                           {event.location}
                         </span>
                       </div>
+
+                      {album ? (
+                        /* Opens the album straight away; without JavaScript the
+                           link still takes you to the Gallery section. */
+                        <a
+                          href="#gallery"
+                          onClick={(clickEvent) => {
+                            clickEvent.preventDefault();
+                            openGalleryAlbum(album.id, clickEvent.currentTarget);
+                          }}
+                          className="mt-5 inline-flex touch-manipulation items-center gap-2 rounded-full bg-accent-500/10 px-4 py-2 text-[13px] font-semibold text-accent-500 ring-1 ring-accent-500/25 transition-colors hover:bg-accent-500/15"
+                        >
+                          <Camera className="h-4 w-4" aria-hidden="true" />
+                          View photos ({album.photos.length})
+                          <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                        </a>
+                      ) : null}
                     </div>
                   </article>
                 </li>
